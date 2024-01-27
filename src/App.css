@@ -5,6 +5,7 @@ body {
   justify-content: center;
   height: 100vh;
   margin: 0;
+  background: linear-gradient(to right, #000000, #DCFFB7);
 }
 
 h2 {
@@ -16,11 +17,13 @@ h2 {
 }
 
 .cell {
-  width: 50px;
-  height: 50px;
+  width: 85px;
+  height: 85px;
   border: 1px solid #ccc;
   box-sizing: border-box;
   cursor: pointer;
+  border-radius: 50%;
+  background-color: white;
 }
 
 .cell:hover {
@@ -31,4 +34,12 @@ h2 {
   display: flex;
   flex-direction: column;
   align-items: center;
+}
+
+.back {
+  margin: 7;
+  border-radius: 10px;
+  border: 1px solid gray;
+  box-shadow: #789461 0 0 16px 16px;
+  background-color: #343434;
 }

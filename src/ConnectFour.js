@@ -4,14 +4,31 @@ import "./App.css";
 const ROWS = 6;
 const COLUMNS = 7;
 
-const initialBoard = Array.from({ length: ROWS }, () =>
-  Array(COLUMNS).fill(null)
-);
+const initialBoard = Array.from({ length: ROWS }, () => Array(COLUMNS).fill(null));
 
-const ConnectFour = () => {
+const ConnectFour = ({ username, cellColor, onGameEnd }) => {
   const [board, setBoard] = useState(initialBoard);
-  const [currentPlayer, setCurrentPlayer] = useState("red");
   const [winner, setWinner] = useState(null);
+  const [currentPlayer, setCurrentPlayer] = useState("red"); // Default starting player
+
+  const boardName = localStorage.getItem("boardName") || "Connect Four";
+  const boardBackgroundColor = localStorage.getItem("boardBackgroundColor") || "#ffffff";
+  useEffect(() => {
+    if (winner) {
+      const storedBoardName = localStorage.getItem("boardName") || "Connect Four";
+      const winnerName = winner === "red" ? localStorage.getItem("username") :  "AI"  || "player";
+  
+      // Kazanan ve oyun ismini localStorage'a kaydet
+      localStorage.setItem("lastWinner", winnerName);
+      localStorage.setItem("lastGameName", storedBoardName);
+  
+      onGameEnd({
+        winner: winnerName,
+        gameName: storedBoardName,
+      });
+    }
+  }, [winner, onGameEnd]);
+
 
   const dropDisc = (column) => {
     if (winner || board[0][column]) return;
@@ -34,12 +51,55 @@ const ConnectFour = () => {
   };
 
   const checkWinner = (board) => {
-    // Check for a winner horizontally, vertically, and diagonally
-    // (same logic as before)
+    for (let row = 0; row < ROWS; row++) {
+      for (let col = 0; col < COLUMNS; col++) {
+        if (board[row][col]) {
+          if (col <= COLUMNS - 4) {
+            if (
+              board[row][col] === board[row][col + 1] &&
+              board[row][col] === board[row][col + 2] &&
+              board[row][col] === board[row][col + 3]
+            ) {
+              setWinner(currentPlayer);
+              return;
+            }
+          }
+          if (row <= ROWS - 4) {
+            if (
+              board[row][col] === board[row + 1][col] &&
+              board[row][col] === board[row + 2][col] &&
+              board[row][col] === board[row + 3][col]
+            ) {
+              setWinner(currentPlayer);
+              return;
+            }
+          }
+          if (col <= COLUMNS - 4 && row <= ROWS - 4) {
+            if (
+              board[row][col] === board[row + 1][col + 1] &&
+              board[row][col] === board[row + 2][col + 2] &&
+              board[row][col] === board[row + 3][col + 3]
+            ) {
+              setWinner(currentPlayer);
+              return;
+            }
+          }
+          if (col >= 3 && row <= ROWS - 4) {
+            if (
+              board[row][col] === board[row + 1][col - 1] &&
+              board[row][col] === board[row + 2][col - 2] &&
+              board[row][col] === board[row + 3][col - 3]
+            ) {
+              setWinner(currentPlayer);
+              return;
+            }
+          }
+        }
+      }
+    }
   };
 
   const computerMove = () => {
-    // Simple AI: Choose a random valid move for the computer
     const validMoves = [];
     for (let col = 0; col < COLUMNS; col++) {
       if (!board[0][col]) {
@@ -48,50 +108,60 @@ const ConnectFour = () => {
     }
 
     if (validMoves.length > 0) {
-      const randomColumn =
-        validMoves[Math.floor(Math.random() * validMoves.length)];
+      const randomColumn = validMoves[Math.floor(Math.random() * validMoves.length)];
       dropDisc(randomColumn);
     }
   };
 
   useEffect(() => {
     if (currentPlayer === "yellow") {
-      // If it's the computer's turn, make a move after a short delay
       const delay = setTimeout(() => {
         computerMove();
-      }, 500); // Adjust the delay as needed
+      }, 500);
       return () => clearTimeout(delay);
     }
   }, [currentPlayer, board]);
 
   useEffect(() => {
-    checkWinner(board);
-  }, [board]);
+    if (winner) {
+      const storedUsername = localStorage.getItem("username") || "player";
+      const storedBoardName = localStorage.getItem("boardName") || "Connect Four";
+      
+      onGameEnd({
+        winner: winner === "red" ? "AI" : storedUsername,
+        gameName: storedBoardName,
+      });
+    }
+  }, [winner, onGameEnd]);
 
   const renderMessage = () => {
     if (winner) {
-      return <p>{winner} wins!</p>;
+      return <p>{winner === "red" ? "AI wins!" : `${localStorage.getItem("username")} wins!`}</p>;
     } else {
-      return <p>{currentPlayer === "red" ? "Your turn" : "Computer's turn"}</p>;
+      return <p>{currentPlayer === "red" ? `player ${localStorage.getItem("username") || "player"}` : "Computer's turn"}</p>;
     }
   };
 
   return (
     <div className="container">
-      <h2>Connect Four</h2>
+      <h2>{boardName}</h2>
       {renderMessage()}
-      {board.map((row, rowIndex) => (
-        <div key={rowIndex} className="row">
-          {row.map((cell, colIndex) => (
-            <div
-              key={colIndex}
-              className="cell"
-              onClick={() => currentPlayer === "red" && dropDisc(colIndex)}
-              style={{ backgroundColor: cell }}
-            ></div>
-          ))}
-        </div>
-      ))}
+      <div className="back" style={{ backgroundColor: boardBackgroundColor }}>
+        {board.map((row, rowIndex) => (
+          <div key={rowIndex} className="row">
+            {row.map((cell, colIndex) => (
+              <div
+                key={colIndex}
+                className="cell"
+                onClick={() => currentPlayer === "red" && dropDisc(colIndex)}
+                style={{
+                  backgroundColor: cell === "red" ? cellColor : cell === "yellow" ? "yellow" : "white",
+                }}
+              ></div>
+            ))}
+          </div>
+        ))}
+      </div>
     </div>
   );
 };
